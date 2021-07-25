@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>ZOZ Spotřeby</h1>
+
+<h2>CAS 32</h2>
+<span>Ujeto km:</span>
+<input type="number" id="distance-cas32" class="distanceInput"/>
+<br/>
+<span>MTH s čerpadlem - Hodin: </span>
+<input type="number" id="pumpHours-cas32" class="timeInput"/>
+<span>Minut: </span>
+<input type="number" id="pumpMinutes-cas32" class="timeInput"/>
+<br/>
+<span>MTH BEZ čerpadla - Hodin: </span>
+<input type="number" id="workHours-cas32" class="timeInput"/>
+<span>Minut: </span>
+<input type="number" id="workMinutes-cas32" class="timeInput"/>
+
+<h2>OA Golf</h2>
+<span>Ujeto km:</span>
+<input type="number" id="distance-OA" class="distanceInput"/>
+
+<h2>Motorová pila</h2>
+<span>Motorová pila Hodin: </span>
+<input type="number" id="workHours-chainsaw" class="timeInput"/>
+<span>Minut: </span>
+<input type="number" id="workMinutes-chainsaw" class="timeInput"/>
+
+<h2>Text ZOZ</h2>
+
+<button type="button"
+onclick="generateText()">
+Vytvoř text</button>
+<br/>
+
+<textarea id="textZOZ" name="Text ZOZ" rows="20" cols="50"></textarea>
+
+<style type="text/css">
+    .timeInput{
+        width: 50px;
+    }
+    .distanceInput{
+        width: 50px;
+    }
+</style>
+
+<script type="text/javascript">
+
+// celková spotřeba pro výpočet
+var totalConsuptionOil = 0.0;
+var totalConsuptionGasoline = 0.0;
+
+// konfigurace - spotřeba l / km
+var distanceConsuptionCAS = 0.6;
+var distanceConsuptionOA = 0.1;
+
+// konfigurace - spotřeba l / minutu
+var timeConsuptionCAS = 0.1;
+var timeConsuptionCASWithPump = 0.2;
+var timeConsuptionChainSaw = 0.03;
+
+
+function generateText(){
+    totalConsuptionOil = 0.0;
+    totalConsuptionGasoline = 0.0;
+    var textZOZ = document.getElementById("textZOZ");
+    var outputText = `Ujeto:
+{0}
+Spotřeba PHM:
+{1}
+Celkem ujeto: {2} km
+Celková spotřeba PHM: {3}`;
+
+    // distance
+    var distanceText = "";
+    var distanceCas32 = getNumValue("distance-cas32");
+    var timeCas32Hours = getNumValue("workHours-cas32");
+    var timeCas32Minutes = getNumValue("workMinutes-cas32");
+    var timeCas32HoursWithPump = getNumValue("pumpHours-cas32");
+    var timeCas32MinutesWithPump = getNumValue("pumpMinutes-cas32");
+
+    var distanceOA = getNumValue("distance-OA");
+
+    var timeChainsawHours = getNumValue("workHours-chainsaw");
+    var timeChainsawMinutes = getNumValue("workMinutes-chainsaw");
+    
+    distanceText = addDistance("CAS 32", distanceCas32, distanceText);
+    distanceText = addDistance("OA", distanceOA, distanceText);
+
+    outputText = outputText.replace("{0}",distanceText);
+    outputText = outputText.replace("{2}",distanceCas32 + distanceOA);
+
+    // fuel consumption
+    var consumptionText = "";
+    consumptionText = addDistanceConsumption(consumptionText, "CAS 32", distanceCas32, distanceConsuptionCAS, "nafty");
+    consumptionText = addTimeconsumption(consumptionText, "CAS 32 Bez čerpadla", timeCas32Hours, timeCas32Minutes, timeConsuptionCAS, "nafty");
+    consumptionText = addTimeconsumption(consumptionText, "CAS 32 S čerpadlem", timeCas32HoursWithPump, timeCas32MinutesWithPump, timeConsuptionCASWithPump, "nafty");
+    consumptionText = addDistanceConsumption(consumptionText, "OA", distanceOA, distanceConsuptionOA, "nafty");
+    consumptionText = addTimeconsumption(consumptionText, "Motorová pila", timeChainsawHours, timeChainsawMinutes, timeConsuptionChainSaw, "benzinu");
+
+    outputText = outputText.replace("{1}",consumptionText);
+
+
+    // total consuption
+    var totalConsuptionText = "";
+    if(totalConsuptionOil > 0)
+        totalConsuptionText = "nafta: " + totalConsuptionOil.toFixed(1); + "l ";
+    if(totalConsuptionGasoline > 0)
+        totalConsuptionText = totalConsuptionText +  " benzín: " + totalConsuptionGasoline.toFixed(1); + "l ";
+    
+    outputText = outputText.replace("{3}",totalConsuptionText);
+
+    textZOZ.innerText = outputText;
+};
+
+function getNumValue(elementId)
+{
+    var val = parseInt(document.getElementById(elementId).value, 10);
+    if(isNaN(val))
+        return 0;
+
+    return val;
+
+}
+
+function addDistanceConsumption(consumptionText, vehicle, distance, consumptionPerKm, fuelType)
+{
+    if(distance != "" && distance != 0) 
+    {
+        var constuption = consumptionPerKm * distance;
+        consumptionText = consumptionText + vehicle + " - " + distance + "km - " + constuption.toFixed(1) + "l " + fuelType + "\n";
+
+        if(fuelType == "nafty")
+        {
+            totalConsuptionOil += constuption;
+        }
+        else
+        {
+            totalConsuptionGasoline += constuption;
+        }
+
+    }
+
+    return consumptionText;
+}
+
+function addTimeconsumption(consumptionText, vehicle, hours, minutes, consumptionPerMinute, fuelType)
+{
+    var totalMinutes = getTotalMinutes(hours, minutes);
+    if(totalMinutes > 0)
+    {
+        var constuption = consumptionPerMinute * totalMinutes;
+        consumptionText = consumptionText + vehicle + " - " + getMth(totalMinutes) + "Mth - " + constuption.toFixed(1) + "l " + fuelType + "\n";
+
+        if(fuelType == "nafty")
+        {
+            totalConsuptionOil += constuption;
+        }
+        else
+        {
+            totalConsuptionGasoline += constuption;
+        }
+    }
+
+    return consumptionText;
+}
+
+function getTotalMinutes(hours, minutes)
+{
+    var res = 0;
+    if(!isNaN(hours))
+        res = hours * 60;
+
+    if(!isNaN(minutes))
+        res += minutes;
+
+    return res;
+}
+
+function getMth(totalMinutes)
+{
+    return (totalMinutes / 60).toFixed(1);
+}
+
+function addDistance(vehicle, distance, distanceText){
+    if(distance != "" && distance != 0) 
+    {
+        distanceText = distanceText + vehicle + " - " + distance + "km \n";
+    }
+    return distanceText;
+};
+
+var templateText = `Motorová pila - 00:06 Mth
+CAS 32 - 00:11 Mth
+
+Ujeto CAS 32 - 8 km
+
+Ujeto celkem - 8 km
+
+Spotřeba PHM
+Motorová pila - 0,2 dl benzín
+CAS 32 - 5 l nafty
+
+Spotřeba celkem - 0,2 dl benzínu, 5 l  nafty`;
+
+
+</script>
+
+</body>
+</html> 
