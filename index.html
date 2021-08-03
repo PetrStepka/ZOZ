@@ -130,7 +130,7 @@ function addDistanceConsumption(consumptionText, vehicle, distance, consumptionP
     if(distance != "" && distance != 0) 
     {
         var constuption = consumptionPerKm * distance;
-        consumptionText = consumptionText + vehicle + " - " + distance + "km - " + constuption.toFixed(1) + "l " + fuelType + "\n";
+        consumptionText = consumptionText + vehicle + " - " + distance + "km - " + constuption.toFixed(1) + "l " + fuelType + "\r\n";
 
         if(fuelType == "nafty")
         {
@@ -152,7 +152,7 @@ function addTimeconsumption(consumptionText, vehicle, hours, minutes, consumptio
     if(totalMinutes > 0)
     {
         var constuption = consumptionPerMinute * totalMinutes;
-        consumptionText = consumptionText + vehicle + " - " + getMth(totalMinutes) + "Mth - " + constuption.toFixed(1) + "l " + fuelType + "\n";
+        consumptionText = consumptionText + vehicle + " - " + getMth(totalMinutes) + "Mth - " + constuption.toFixed(1) + "l " + fuelType + "\r\n";
 
         if(fuelType == "nafty")
         {
@@ -187,7 +187,7 @@ function getMth(totalMinutes)
 function addDistance(vehicle, distance, distanceText){
     if(distance != "" && distance != 0) 
     {
-        distanceText = distanceText + vehicle + " - " + distance + "km \n";
+        distanceText = distanceText + vehicle + " - " + distance + "km \r\n";
     }
     return distanceText;
 };
