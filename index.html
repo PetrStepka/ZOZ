@@ -18,7 +18,7 @@
 <span>Minut: </span>
 <input type="number" id="workMinutes-cas32" class="timeInput"/>
 
-<h2>OA Golf</h2>
+<h2>OA Fabia</h2>
 <span>Ujeto km:</span>
 <input type="number" id="distance-OA" class="distanceInput"/>
 
@@ -97,7 +97,7 @@ Celková spotřeba PHM: {3}`;
     consumptionText = addDistanceConsumption(consumptionText, "CAS 32", distanceCas32, distanceConsuptionCAS, "nafty");
     consumptionText = addTimeconsumption(consumptionText, "CAS 32 Bez čerpadla", timeCas32Hours, timeCas32Minutes, timeConsuptionCAS, "nafty");
     consumptionText = addTimeconsumption(consumptionText, "CAS 32 S čerpadlem", timeCas32HoursWithPump, timeCas32MinutesWithPump, timeConsuptionCASWithPump, "nafty");
-    consumptionText = addDistanceConsumption(consumptionText, "OA", distanceOA, distanceConsuptionOA, "nafty");
+    consumptionText = addDistanceConsumption(consumptionText, "OA", distanceOA, distanceConsuptionOA, "benzinu");
     consumptionText = addTimeconsumption(consumptionText, "Motorová pila", timeChainsawHours, timeChainsawMinutes, timeConsuptionChainSaw, "benzinu");
 
     outputText = outputText.replace("{1}",consumptionText);
