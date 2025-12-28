@@ -21,6 +21,23 @@
 </head>
 <body>
   <h1>ZOZ Spotřeby</h1>
+  <div style="max-width:600px;margin:0 auto 20px auto;">
+    <label for="eventArea"><b>Místo zásahu:</b></label>
+    <select id="eventArea" style="width:100%;padding:8px;margin:8px 0 0 0;">
+      <option value="ZÁSAH MIMO KATASTR ZŘIZOVATELE">Mimo katastr zřizovatele</option>
+      <option value="ZÁSAH V KATASTRU ZŘIZOVATELE">V katastru zřizovatele</option>
+    </select>
+    <div style="margin-top:10px;">
+      <label for="eventPlace">Místo události:</label>
+      <input id="eventPlace" type="text" style="width:100%;padding:6px;margin-bottom:6px;" placeholder="např. Blevice, areál firmy..." />
+      <label for="eventReason">Důvod zásahu:</label>
+      <input id="eventReason" type="text" style="width:100%;padding:6px;margin-bottom:6px;" placeholder="např. požár odpadu, technická pomoc..." />
+      <label for="eventCrew">Počet osob a složení:</label>
+      <input id="eventCrew" type="text" style="width:100%;padding:6px;margin-bottom:6px;" placeholder="např. 1+5, CAS 32 v počtu 1+2 a OA v počtu 1+1..." />
+      <label for="eventDesc">Stručný průběh zásahu:</label>
+      <textarea id="eventDesc" style="width:100%;padding:6px;min-height:60px;" placeholder="např. Po příjezdu na místo zásahu bylo průzkumem zjištěno..."></textarea>
+    </div>
+  </div>
   <div class="form-container" id="zozForm"></div>
   <div id="controls">
     <button id="generateBtn" type="button">Vytvoř text</button>
@@ -61,9 +78,31 @@
       form.appendChild(card);
     });
 
+    // Předvyplnění průběhu zásahu podle výběru místa zásahu
+    const eventAreaEl = document.getElementById('eventArea');
+    const eventDescEl = document.getElementById('eventDesc');
+    function setDefaultDesc() {
+      if (eventAreaEl.value === 'ZÁSAH MIMO KATASTR ZŘIZOVATELE') {
+        eventDescEl.value = 'Po příjezdu na místo zásahu bylo průzkumem zjištěno, že na místě již zasahuje ___________.\n\nPo domluvě s velitelem zásahu se jednotka vrátila zpět na základnu.';
+      } else if (eventAreaEl.value === 'ZÁSAH V KATASTRU ZŘIZOVATELE') {
+        eventDescEl.value = 'Po příjezdu na místo zásahu bylo průzkumem zjištěno, že se jedná o ___________.\n\nPo domluvě s velitelem zásahu se jednotka vrátila zpět na základnu.';
+      }
+    }
+    eventAreaEl.addEventListener('change', setDefaultDesc);
+    // Předvyplnit při načtení stránky
+    setDefaultDesc();
+
     document.getElementById('generateBtn').addEventListener('click', () => {
+      // Sběr vstupů z formuláře
+      const eventType = document.getElementById('eventArea').value;
+      const eventPlace = document.getElementById('eventPlace').value.trim();
+      const eventReason = document.getElementById('eventReason').value.trim();
+      const eventCrew = document.getElementById('eventCrew').value.trim();
+      const eventDesc = document.getElementById('eventDesc').value.trim();
+
       let totalDiesel = 0, totalGasoline = 0, totalDistance = 0;
       let distanceText = '', consumptionText = '';
+      let crewText = eventCrew ? ` v počtu ${eventCrew}` : '';
 
       vehicles.forEach(v => {
         const dist = parseFloat(document.getElementById(`distance-${v.id}`)?.value) || 0;
@@ -86,33 +125,52 @@
         // Spotřeba km
         if (v.consumption.perKm !== undefined && dist > 0) {
           const cons = v.consumption.perKm * dist / (v.consumption.unitKm || 1);
-          consumptionText += `${v.name} - ${dist}km - ${cons.toFixed(1)}l ${v.fuel}\n`;
+          consumptionText += `${v.name} - ${dist}km - ${cons.toFixed(1)} l ${v.fuel}\n`;
           v.fuel === 'nafta' ? totalDiesel += cons : totalGasoline += cons;
         }
 
         // Spotřeba Mth
-		// Bez čerpadla jen pokud definováno
         if (v.consumption.perHourWithPump !== undefined && (hrs || mins)) {
           const cons = v.consumption.perHour * (hrs + mins / 60);
-          consumptionText += `${v.name} Bez čerpadla - ${totalMth}Mth - ${cons.toFixed(1)}l ${v.fuel}\n`;
+          consumptionText += `${v.name} Bez čerpadla - ${totalMth}Mth - ${cons.toFixed(1)} l ${v.fuel}\n`;
           v.fuel === 'nafta' ? totalDiesel += cons : totalGasoline += cons;
         }
-        // S čerpadlem
         if (v.consumption.perHourWithPump !== undefined && (pumpH || pumpM)) {
           const consPump = v.consumption.perHourWithPump * (pumpH + pumpM / 60);
-          consumptionText += `${v.name} S čerpadlem - ${totalPumpMth}Mth - ${consPump.toFixed(1)}l ${v.fuel}\n`;
+          consumptionText += `${v.name} S čerpadlem - ${totalPumpMth}Mth - ${consPump.toFixed(1)} l ${v.fuel}\n`;
           v.fuel === 'nafta' ? totalDiesel += consPump : totalGasoline += consPump;
         }
-        // Ostatní stroje (bez pumpy)
         if (v.consumption.perHour !== undefined && (hrs || mins) && v.consumption.perHourWithPump === undefined) {
           const cons = v.consumption.perHour * (hrs + mins / 60);
-          consumptionText += `${v.name} - ${totalMth}Mth - ${cons.toFixed(1)}l ${v.fuel}\n`;
+          consumptionText += `${v.name} - ${totalMth}Mth - ${cons.toFixed(1)} l ${v.fuel}\n`;
           v.fuel === 'nafta' ? totalDiesel += cons : totalGasoline += cons;
         }
       });
 
-      // Sestavení reportu
-      let report = `Ujeto:\n${distanceText}\nSpotřeba PHM:\n${consumptionText}\nCelkem ujeto: ${totalDistance} km\nCelková spotřeba PHM: `;
+      // Sestavení reportu podle vzoru
+      let report = '';
+      // Nadpis
+      report += `${eventType}\n\n`;
+      // První věta: Jednotka vyjela ...
+      if (eventPlace || eventReason || eventCrew) {
+        report += `Jednotka vyjela`;
+        if (crewText) report += crewText;
+        if (eventReason) report += ` na ${eventReason}`;
+        if (eventPlace) report += ` do ${eventPlace}`;
+        report += `.\n`;
+      }
+      // Průběh zásahu
+      if (eventDesc) {
+        report += eventDesc.trim();
+        if (!eventDesc.endsWith('.')) report += '.';
+        report += '\n';
+      }
+      // Sekce Ujeto
+      report += `\nUjeto:\n${distanceText}`;
+      // Sekce Spotřeba PHM
+      report += `\nSpotřeba PHM:\n${consumptionText}`;
+      // Souhrny
+      report += `\nCelkem ujeto: ${totalDistance} km\nCelková spotřeba PHM: `;
       const parts = [];
       if (totalDiesel > 0) parts.push(`nafta: ${totalDiesel.toFixed(1)}`);
       if (totalGasoline > 0) parts.push(`benzín: ${totalGasoline.toFixed(1)}`);
