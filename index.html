@@ -1,183 +1,239 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZOZ Spotřeby</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; color: #333; }
-    h1 { text-align: center; margin-bottom: 20px; }
-    .form-container { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-    .vehicle-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .vehicle-card h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; }
-    .field-group { display: flex; align-items: center; margin: 8px 0; }
-    .field-group label { font-size: .9rem; }
-    .field-group input { width: 50px; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: .9rem; margin-right: 8px; }
-    #controls { text-align: center; margin: 20px 0; }
-    #generateBtn { padding: 10px 20px; font-size: 1rem; border: none; border-radius: 5px; background: #007bff; color: #fff; cursor: pointer; }
-    #generateBtn:hover { background: #0056b3; }
-    #textZOZ { white-space: pre-wrap; background: #fff; border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin-top: 20px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>ZOZ Spotřeby</title>
+<style>
+  body { font-family: system-ui, -apple-system, Arial, sans-serif; margin: 0 auto; padding: 12px; max-width: 900px; background: #f0f2f5; color: #333; }
+  h1 { text-align: center; font-size: 1.4rem; margin: 8px 0 16px; position: relative; }
+  h1 button { position: absolute; right: 0; top: 0; flex: none; padding: 6px 12px; font-size: .85rem; }
+  .card { background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,.1); margin-bottom: 12px; }
+  .card h2 { margin: 0; font-size: 1.1rem; }
+  .norm { color: #777; font-size: .8rem; }
+  label { display: block; font-size: .85rem; margin-top: 8px; }
+  input, select, textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 2px; padding: 8px; font-size: 16px; font-family: inherit; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; }
+  .chks { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
+  .chks label { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; margin: 0; }
+  .chks input { width: 20px; height: 20px; margin: 0; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .vehicles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .actions { display: flex; gap: 8px; margin: 12px 0; }
+  button { flex: 1; padding: 12px; font-size: 1rem; border: 0; border-radius: 6px; background: #007bff; color: #fff; cursor: pointer; }
+  button.secondary { background: #6c757d; }
+  .sugg { position: absolute; display: none; background: #fff; color: #333; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.15); max-height: 40vh; overflow: auto; z-index: 10; }
+  .sugg div { padding: 8px; cursor: pointer; }
+  .sugg div:hover, .sugg .sel { background: #007bff; color: #fff; }
+  #out { min-height: 200px; resize: none; }
+</style>
 </head>
 <body>
-  <h1>ZOZ Spotřeby</h1>
-  <div style="max-width:600px;margin:0 auto 20px auto;">
-    <label for="eventArea"><b>Místo zásahu:</b></label>
-    <select id="eventArea" style="width:100%;padding:8px;margin:8px 0 0 0;">
-      <option value="ZÁSAH MIMO KATASTR ZŘIZOVATELE">Mimo katastr zřizovatele</option>
-      <option value="ZÁSAH V KATASTRU ZŘIZOVATELE">V katastru zřizovatele</option>
-    </select>
-    <div style="margin-top:10px;">
-      <label for="eventPlace">Místo události:</label>
-      <input id="eventPlace" type="text" style="width:100%;padding:6px;margin-bottom:6px;" placeholder="např. Blevice, areál firmy..." />
-      <label for="eventReason">Důvod zásahu:</label>
-      <input id="eventReason" type="text" style="width:100%;padding:6px;margin-bottom:6px;" placeholder="např. požár odpadu, technická pomoc..." />
-      <label for="eventCrew">Počet osob a složení:</label>
-      <input id="eventCrew" type="text" style="width:100%;padding:6px;margin-bottom:6px;" placeholder="např. 1+5, CAS 32 v počtu 1+2 a OA v počtu 1+1..." />
-      <label for="eventDesc">Stručný průběh zásahu:</label>
-      <textarea id="eventDesc" style="width:100%;padding:6px;min-height:60px;" placeholder="např. Po příjezdu na místo zásahu bylo průzkumem zjištěno..."></textarea>
+<h1>ZOZ Spotřeby <button class="clear secondary" type="button">Vymazat</button></h1>
+<form id="form" autocomplete="off">
+  <div class="card">
+    <label>Katastr
+      <select name="area">
+        <option>ZÁSAH MIMO KATASTR ZŘIZOVATELE</option>
+        <option>ZÁSAH V KATASTRU ZŘIZOVATELE</option>
+        <option>ZÁSAH V KATASTRU NASMLOUVANÉ OBCE</option>
+      </select>
+    </label>
+    <label>Jednotka vyjela na…
+      <input name="reason" data-list="reasons" placeholder="požár odpadu, technickou pomoc…">
+    </label>
+    <div class="row">
+      <label>Kam
+        <select name="placePrefix">
+          <option>do obce</option>
+          <option>do města</option>
+          <option>do areálu firmy</option>
+          <option>na</option>
+          <option>k</option>
+          <option value="">(bez předložky)</option>
+        </select>
+      </label>
+      <label>Místo události
+        <input name="place" data-list="places" placeholder="Blevice">
+      </label>
     </div>
+    <label>Průzkumem zjištěno, že…
+      <input name="found" data-list="findings" placeholder="na místě již zasahuje jednotka HZS Kladno">
+    </label>
+    <label>Činnost jednotky</label>
+    <div class="chks" id="acts"></div>
+    <label>Další činnost (vlastní text)
+      <textarea name="activity" rows="2" placeholder="Po domluvě s velitelem zásahu došlo k výměně techniky…"></textarea>
+    </label>
+    <label>Závěr
+      <select name="ending">
+        <option>Po domluvě s velitelem zásahu se jednotka vrátila zpět na základnu.</option>
+        <option>Po domluvě s velitelem zásahu jednotka zůstala na místě jako záloha. Po ukončení zásahu se jednotka vrátila zpět na základnu.</option>
+        <option>Po lokalizaci požáru byla jednotka odeslána zpět na základnu.</option>
+        <option value="">(bez závěru)</option>
+      </select>
+    </label>
+    <label>Poznámka (samostatný odstavec)
+      <textarea name="note" rows="2" placeholder="Na místě zásahu byla ponechána jedna hadice B 75. VZ informován."></textarea>
+    </label>
   </div>
-  <div class="form-container" id="zozForm"></div>
-  <div id="controls">
-    <button id="generateBtn" type="button">Vytvoř text</button>
-  </div>
-  <div id="textZOZ"></div>
+  <div class="vehicles" id="vehicles"></div>
+  <datalist id="reasons">
+    <option>požár</option><option>požár odpadu</option><option>požár OA</option><option>požár RD</option>
+    <option>požár nízké budovy</option><option>požár výškové budovy</option><option>požár lesa</option>
+    <option>technickou pomoc</option><option>technologickou pomoc</option><option>ostatní pomoc</option>
+    <option>dopravní nehodu</option><option>únik ropných produktů</option><option>planý poplach</option>
+  </datalist>
+  <datalist id="places">
+    <option>Blevice</option><option>Brandýsek</option><option>Dřetovice</option><option>Hrdlív</option>
+    <option>Jemníky</option><option>Kamenný Most</option><option>Kladno</option><option>Neuměřice</option>
+    <option>Podlešín</option><option>Stehelčeves</option><option>Třebusice</option><option>Zákolany</option>
+    <option>Zvoleněves</option><option>Želenice</option>
+  </datalist>
+  <datalist id="findings">
+    <option>na místě již zasahuje jednotka HZS Kladno</option>
+    <option>na místě již zasahuje jednotka HZS Slaný</option>
+    <option>na místě již zasahují ostatní jednotky</option>
+    <option>se jedná o planý poplach</option>
+  </datalist>
+</form>
+<div class="actions">
+  <button id="copy" type="button">Kopírovat</button>
+  <button class="clear secondary" type="button">Vymazat</button>
+</div>
+<textarea id="out" spellcheck="false"></textarea>
 
-  <script>
-    const vehicles = [
-      { id: 'cas32', name: 'CAS 32', fuel: 'nafta', consumption: { perKm: 0.52, perHour: 15, perHourWithPump: 31 } },
-      { id: 'cas25', name: 'CAS 25', fuel: 'nafta', consumption: { perKm: 0.35, perHour: 10, perHourWithPump: 21 } },
-      { id: 'oa', name: 'OA Fabia', fuel: 'benzín', consumption: { perKm: 0.1 } },
-      { id: 'chainsaw', name: 'Motorová pila', fuel: 'benzín', consumption: { perHour: 2 } },
-	  { id: 'floatingPump', name: 'Plovoucí čerpadlo', fuel: 'benzín', consumption: { perHour: 3 } }
-    ];
+<script>
+const vehicles = [
+  { id: 'cas32', name: 'CAS 32', fuel: 'nafta', perKm: 0.52, perHour: 15, perHourPump: 31 },
+  { id: 'cas25', name: 'CAS 25', fuel: 'nafta', perKm: 0.35, perHour: 10, perHourPump: 21 },
+  { id: 'oa', name: 'OA Fabia', fuel: 'benzín', perKm: 0.1 },
+  { id: 'chainsaw', name: 'Motorová pila', fuel: 'benzín', perHour: 2 },
+  { id: 'floatingPump', name: 'Plovoucí čerpadlo', fuel: 'benzín', perHour: 3 },
+];
+// zaškrtávátka činností – klidně doplň další
+// `do` = co jednotka prováděla (4. pád), zaškrtnuté se spojí do jedné věty; `text` = samostatná věta
+const activities = [
+  { id: 'water', label: 'doplňování vody', do: 'doplňování vody do CAS ostatních jednotek' },
+  { id: 'hoses', label: 'hašení na proudech', do: 'hasební práce na již vytvořených proudech' },
+  { id: 'highpressure', label: 'vysokotlaký proud', do: 'hašení pomocí vysokotlakého proudu' },
+  { id: 'dismantle', label: 'rozebírání konstrukcí', do: 'rozebírání konstrukcí' },
+  { id: 'shuttle', label: 'kyvadlová doprava vody', do: 'kyvadlovou dálkovou dopravu vody z hydrantu' },
+  { id: 'vent', label: 'odvětrání', do: 'odvětrání objektu' },
+  { id: 'light', label: 'osvětlení', do: 'osvětlení místa zásahu' },
+  { id: 'pump', label: 'čerpání vody', do: 'čerpání vody plovoucím čerpadlem' },
+  { id: 'tree', label: 'odstranění stromu', do: 'odstranění stromu motorovou pilou' },
+  { id: 'mopup', label: 'dohašování ohnisek', do: 'dohašování skrytých ohnisek' },
+  { id: 'thermo', label: 'termokamera', do: 'kontrolu místa zásahu termokamerou' },
+  { id: 'breathing', label: 'dýchací technika', text: 'Členové jednotky zasahovali v dýchací technice.' },
+];
+const cz = n => String(Math.round(n * 10) / 10).replace('.', ',');
+const litres = n => Math.round(n); // ponytail: celé litry jako ve vzorech; pro desetiny Math.round(n * 10) / 10
 
-    const form = document.getElementById('zozForm');
-    vehicles.forEach(v => {
-      const card = document.createElement('div');
-      card.classList.add('vehicle-card');
-      let html = `<h2>${v.name}</h2>`;
+function buildReport(f) {
+  const num = k => parseFloat(f[k]) || 0, txt = k => (f[k] || '').trim(), dot = s => /[.!?]$/.test(s) ? s : s + '.';
+  const went = [], driven = [], fuel = [], total = { km: 0, nafta: 0, benzín: 0 };
+  for (const v of vehicles) {
+    const crew = txt(v.id + '.crew'), km = num(v.id + '.km');
+    const mth = num(v.id + '.h') + num(v.id + '.min') / 60;
+    const pmth = num(v.id + '.ph') + num(v.id + '.pmin') / 60;
+    const use = (label, amount, l) => { fuel.push(`${v.name}${label} - ${amount} - ${cz(l)} l ${v.fuel}`); total[v.fuel] += l; };
+    if (v.perKm && (km || crew)) went.push(v.name + (crew ? ` v počtu ${crew}` : ''));
+    if (km) { driven.push(`${v.name} - ${cz(km)} km`); total.km += km; use('', `${cz(km)} km`, litres(km * v.perKm)); }
+    if (mth + pmth) driven.push(`${v.name} - ${cz(mth + pmth)} Mth`);
+    if (mth) use(v.perHourPump ? ' Bez čerpadla' : '', `${cz(mth)} Mth`, litres(mth * v.perHour));
+    if (pmth) use(' S čerpadlem', `${cz(pmth)} Mth`, litres(pmth * v.perHourPump));
+  }
+  const reason = txt('reason'), place = txt('place') && [txt('placePrefix'), txt('place')].filter(Boolean).join(' ');
+  const first = (went.length || reason || place)
+    ? dot('Jednotka vyjela' + (went.length ? ' s ' + went.join(' a ') : '') + (reason ? ' na ' + reason : '') + (place ? ' ' + place : ''))
+    : '';
+  const found = txt('found').replace(/\.$/, ''), activity = txt('activity'), note = txt('note');
+  const list = xs => xs.length > 1 ? xs.slice(0, -1).join(', ') + ' a ' + xs[xs.length - 1] : xs[0];
+  const acts = [];
+  for (const a of activities.filter(a => f['act.' + a.id])) {
+    const last = acts[acts.length - 1];
+    if (a.do && last && last.do) last.do.push(a.do); else acts.push(a.do ? { do: [a.do] } : { text: a.text });
+  }
+  const actText = acts.map(a => a.text || `Jednotka prováděla ${list(a.do)}.`);
+  const story = (first || found || actText.length || activity) ? [
+    first,
+    found && `Po příjezdu na místo zásahu bylo průzkumem zjištěno, že ${found}.`,
+    ...actText,
+    activity && dot(activity),
+    txt('ending'),
+  ].filter(Boolean).join(' ') : '';
+  const lines = [txt('area')];
+  if (story) lines.push('', story);
+  if (note) lines.push('', dot(note));
+  if (driven.length) lines.push('', 'Ujeto:', ...driven);
+  if (fuel.length) lines.push('', 'Spotřeba PHM:', ...fuel);
+  const totals = [];
+  if (total.km) totals.push(`Celkem ujeto: ${cz(total.km)} km`);
+  const phm = ['nafta', 'benzín'].filter(k => total[k]).map(k => `${k}: ${cz(total[k])} l`);
+  if (phm.length) totals.push('Celková spotřeba PHM: ' + phm.join(', '));
+  if (totals.length) lines.push('', ...totals);
+  return lines.join('\n');
+}
+// --- UI ---
+const form = document.getElementById('form'), out = document.getElementById('out'), copy = document.getElementById('copy');
+const numInput = (name, label) => `<label>${label}<input name="${name}" type="number" min="0" inputmode="decimal"></label>`;
+document.getElementById('vehicles').innerHTML = vehicles.map(v => `
+  <div class="card">
+    <h2>${v.name}</h2>
+    <div class="norm">${[v.perKm && `${String(v.perKm).replace('.', ',')} l/km`, v.perHour && `${v.perHour} l/Mth`, v.perHourPump && `${v.perHourPump} l/Mth s čerpadlem`].filter(Boolean).join(' · ')}</div>
+    ${v.perKm ? `<label>Posádka<input name="${v.id}.crew" placeholder="1+3"></label>` + numInput(v.id + '.km', 'Ujeto km') : ''}
+    ${v.perHour ? `<div class="row">${numInput(v.id + '.h', v.perHourPump ? 'Motohodiny bez čerpadla' : 'Motohodiny')}${numInput(v.id + '.min', 'Minuty')}</div>` : ''}
+    ${v.perHourPump ? `<div class="row">${numInput(v.id + '.ph', 'Motohodiny s čerpadlem')}${numInput(v.id + '.pmin', 'Minuty')}</div>` : ''}
+  </div>`).join('');
 
-      // km
-      if (v.consumption.perKm !== undefined) {
-        html += `<div class='field-group'><label for='distance-${v.id}'>Ujeto km:</label><input id='distance-${v.id}' type='number' /></div>`;
-      }
+document.getElementById('acts').innerHTML = activities.map(a => `<label><input type="checkbox" name="act.${a.id}" value="1">${a.label}</label>`).join('');
 
-      // motohodiny bez/podle pumpy
-      if (v.consumption.perHour !== undefined) {
-        if (v.consumption.perHourWithPump !== undefined) {
-          html += `<div class='field-group'><label for='${v.id}-hours'>Motohodin (bez čerpadla):</label><input id='${v.id}-hours' type='number' /><label for='${v.id}-minutes'>Minut:</label><input id='${v.id}-minutes' type='number' /></div>`;
-          html += `<div class='field-group'><label for='pumpHours-${v.id}'>Motohodin (s čerpadlem):</label><input id='pumpHours-${v.id}' type='number' /><label for='pumpMinutes-${v.id}'>Minut:</label><input id='pumpMinutes-${v.id}' type='number' /></div>`;
-        } else {
-          html += `<div class='field-group'><label for='${v.id}-hours'>Motohodin:</label><input id='${v.id}-hours' type='number' /><label for='${v.id}-minutes'>Minut:</label><input id='${v.id}-minutes' type='number' /></div>`;
-        }
-      }
+// ponytail: vlastní nabídka místo <datalist> – Safari na Macu ji v tmavém režimu kreslí bílým textem na bílé
+const sugg = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'sugg' }));
+let active;
+const hideSugg = () => { sugg.style.display = 'none'; active = null; };
+const pick = v => { const inp = active; inp.value = v; inp.dispatchEvent(new Event('input', { bubbles: true })); hideSugg(); };
+function showSugg(inp) {
+  const q = inp.value.trim().toLowerCase();
+  const opts = [...document.getElementById(inp.dataset.list).options].map(o => o.value).filter(v => v.toLowerCase().includes(q));
+  if (!opts.length) return hideSugg();
+  active = inp;
+  sugg.innerHTML = opts.map(v => `<div>${v}</div>`).join('');
+  const r = inp.getBoundingClientRect();
+  Object.assign(sugg.style, { display: 'block', left: r.left + scrollX + 'px', top: r.bottom + scrollY + 'px', width: r.width + 'px' });
+}
+sugg.addEventListener('mousedown', e => e.preventDefault());
+sugg.addEventListener('click', e => { if (e.target !== sugg) pick(e.target.textContent); });
+form.querySelectorAll('input[data-list]').forEach(inp => {
+  inp.addEventListener('focus', () => showSugg(inp));
+  inp.addEventListener('input', () => showSugg(inp));
+  inp.addEventListener('blur', hideSugg);
+  inp.addEventListener('keydown', e => {
+    if (!active) return;
+    const items = [...sugg.children], i = items.findIndex(el => el.classList.contains('sel'));
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[i]?.classList.remove('sel');
+      items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].classList.add('sel');
+    } else if (e.key === 'Enter' && i >= 0) { e.preventDefault(); pick(items[i].textContent); }
+    else if (e.key === 'Escape') hideSugg();
+  });
+});
 
-      card.innerHTML = html;
-      form.appendChild(card);
-    });
-
-    // Předvyplnění průběhu zásahu podle výběru místa zásahu
-    const eventAreaEl = document.getElementById('eventArea');
-    const eventDescEl = document.getElementById('eventDesc');
-    function setDefaultDesc() {
-      if (eventAreaEl.value === 'ZÁSAH MIMO KATASTR ZŘIZOVATELE') {
-        eventDescEl.value = 'Po příjezdu na místo zásahu bylo průzkumem zjištěno, že na místě již zasahuje ___________.\n\nPo domluvě s velitelem zásahu se jednotka vrátila zpět na základnu.';
-      } else if (eventAreaEl.value === 'ZÁSAH V KATASTRU ZŘIZOVATELE') {
-        eventDescEl.value = 'Po příjezdu na místo zásahu bylo průzkumem zjištěno, že se jedná o ___________.\n\nPo domluvě s velitelem zásahu se jednotka vrátila zpět na základnu.';
-      }
-    }
-    eventAreaEl.addEventListener('change', setDefaultDesc);
-    // Předvyplnit při načtení stránky
-    setDefaultDesc();
-
-    document.getElementById('generateBtn').addEventListener('click', () => {
-      // Sběr vstupů z formuláře
-      const eventType = document.getElementById('eventArea').value;
-      const eventPlace = document.getElementById('eventPlace').value.trim();
-      const eventReason = document.getElementById('eventReason').value.trim();
-      const eventCrew = document.getElementById('eventCrew').value.trim();
-      const eventDesc = document.getElementById('eventDesc').value.trim();
-
-      let totalDiesel = 0, totalGasoline = 0, totalDistance = 0;
-      let distanceText = '', consumptionText = '';
-      let crewText = eventCrew ? ` v počtu ${eventCrew}` : '';
-
-      vehicles.forEach(v => {
-        const dist = parseFloat(document.getElementById(`distance-${v.id}`)?.value) || 0;
-        const hrs = parseFloat(document.getElementById(`${v.id}-hours`)?.value) || 0;
-        const mins = parseFloat(document.getElementById(`${v.id}-minutes`)?.value) || 0;
-        const pumpH = parseFloat(document.getElementById(`pumpHours-${v.id}`)?.value) || 0;
-        const pumpM = parseFloat(document.getElementById(`pumpMinutes-${v.id}`)?.value) || 0;
-        const totalMth = (hrs + mins / 60).toFixed(1);
-        const totalPumpMth = (pumpH + pumpM / 60).toFixed(1);
-
-        // Ujeto
-        if (v.consumption.perKm !== undefined && dist > 0) {
-          distanceText += `${v.name} - ${dist}km\n`;
-          totalDistance += dist;
-        }
-        if (v.consumption.perHour !== undefined && (hrs || mins)) {
-          distanceText += `${v.name} - ${totalMth}Mth\n`;
-        }
-
-        // Spotřeba km
-        if (v.consumption.perKm !== undefined && dist > 0) {
-          const cons = v.consumption.perKm * dist / (v.consumption.unitKm || 1);
-          consumptionText += `${v.name} - ${dist}km - ${cons.toFixed(1)} l ${v.fuel}\n`;
-          v.fuel === 'nafta' ? totalDiesel += cons : totalGasoline += cons;
-        }
-
-        // Spotřeba Mth
-        if (v.consumption.perHourWithPump !== undefined && (hrs || mins)) {
-          const cons = v.consumption.perHour * (hrs + mins / 60);
-          consumptionText += `${v.name} Bez čerpadla - ${totalMth}Mth - ${cons.toFixed(1)} l ${v.fuel}\n`;
-          v.fuel === 'nafta' ? totalDiesel += cons : totalGasoline += cons;
-        }
-        if (v.consumption.perHourWithPump !== undefined && (pumpH || pumpM)) {
-          const consPump = v.consumption.perHourWithPump * (pumpH + pumpM / 60);
-          consumptionText += `${v.name} S čerpadlem - ${totalPumpMth}Mth - ${consPump.toFixed(1)} l ${v.fuel}\n`;
-          v.fuel === 'nafta' ? totalDiesel += consPump : totalGasoline += consPump;
-        }
-        if (v.consumption.perHour !== undefined && (hrs || mins) && v.consumption.perHourWithPump === undefined) {
-          const cons = v.consumption.perHour * (hrs + mins / 60);
-          consumptionText += `${v.name} - ${totalMth}Mth - ${cons.toFixed(1)} l ${v.fuel}\n`;
-          v.fuel === 'nafta' ? totalDiesel += cons : totalGasoline += cons;
-        }
-      });
-
-      // Sestavení reportu podle vzoru
-      let report = '';
-      // Nadpis
-      report += `${eventType}\n\n`;
-      // První věta: Jednotka vyjela ...
-      if (eventPlace || eventReason || eventCrew) {
-        report += `Jednotka vyjela`;
-        if (crewText) report += crewText;
-        if (eventReason) report += ` na ${eventReason}`;
-        if (eventPlace) report += ` do ${eventPlace}`;
-        report += `.\n`;
-      }
-      // Průběh zásahu
-      if (eventDesc) {
-        report += eventDesc.trim();
-        if (!eventDesc.endsWith('.')) report += '.';
-        report += '\n';
-      }
-      // Sekce Ujeto
-      report += `\nUjeto:\n${distanceText}`;
-      // Sekce Spotřeba PHM
-      report += `\nSpotřeba PHM:\n${consumptionText}`;
-      // Souhrny
-      report += `\nCelkem ujeto: ${totalDistance} km\nCelková spotřeba PHM: `;
-      const parts = [];
-      if (totalDiesel > 0) parts.push(`nafta: ${totalDiesel.toFixed(1)}`);
-      if (totalGasoline > 0) parts.push(`benzín: ${totalGasoline.toFixed(1)}`);
-      report += parts.join(', ');
-
-      document.getElementById('textZOZ').innerText = report.trim();
-    });
-  </script>
+const KEY = 'zoz';
+const data = () => Object.fromEntries(new FormData(form));
+const render = () => { out.value = buildReport(data()); out.style.height = 'auto'; out.style.height = out.scrollHeight + 4 + 'px'; };
+form.addEventListener('input', () => { try { localStorage.setItem(KEY, JSON.stringify(data())); } catch {} render(); });
+try { Object.entries(JSON.parse(localStorage.getItem(KEY)) || {}).forEach(([k, v]) => { const el = form.elements[k]; if (el) el.type === 'checkbox' ? el.checked = true : el.value = v; }); } catch {}
+render();
+document.querySelectorAll('.clear').forEach(b => b.onclick = () => { form.reset(); try { localStorage.removeItem(KEY); } catch {} render(); });
+copy.onclick = async () => {
+  try { await navigator.clipboard.writeText(out.value); }
+  catch { out.select(); document.execCommand('copy'); }
+  copy.textContent = 'Zkopírováno ✓';
+  setTimeout(() => copy.textContent = 'Kopírovat', 1500);
+};
+</script>
 </body>
 </html>
