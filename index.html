@@ -17,6 +17,12 @@
   .chks { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
   .chks label { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; margin: 0; }
   .chks input { width: 20px; height: 20px; margin: 0; }
+  .crew { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+  .crew label { margin: 0; position: relative; }
+  .crew input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+  .crew span { display: inline-block; min-width: 36px; padding: 7px 6px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: .9rem; cursor: pointer; }
+  .crew input:checked + span { background: #007bff; border-color: #007bff; color: #fff; }
+  .crew input:focus-visible + span { outline: 2px solid #007bff; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .vehicles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
   .actions { display: flex; gap: 8px; margin: 12px 0; }
@@ -104,10 +110,13 @@
 <textarea id="out" spellcheck="false"></textarea>
 
 <script>
+// type = doplní se za název v první větě a v nadpisu karty (v Ujeto/Spotřeba zůstává krátký název)
+// per100km = l/100 km, perHour = l/Mth, seats = max osob včetně řidiče (tlačítka posádky)
 const vehicles = [
-  { id: 'cas32', name: 'CAS 32', fuel: 'nafta', perKm: 0.52, perHour: 15, perHourPump: 31 },
-  { id: 'cas25', name: 'CAS 25', fuel: 'nafta', perKm: 0.35, perHour: 10, perHourPump: 21 },
-  { id: 'oa', name: 'OA Fabia', fuel: 'benzín', perKm: 0.1 },
+  { id: 'cas32', name: 'CAS 32', type: 'Tatra 815', fuel: 'nafta', per100km: 52, perHour: 15, perHourPump: 31, seats: 4 },
+  { id: 'cas25', name: 'CAS 25', type: 'LIAZ', fuel: 'nafta', per100km: 35, perHour: 10, perHourPump: 21, seats: 8 },
+  { id: 'da', name: 'DA Ford', fuel: 'nafta', per100km: 10, seats: 9 },
+  { id: 'oa', name: 'OA Fabia', fuel: 'benzín', per100km: 10, seats: 5 },
   { id: 'chainsaw', name: 'Motorová pila', fuel: 'benzín', perHour: 2 },
   { id: 'floatingPump', name: 'Plovoucí čerpadlo', fuel: 'benzín', perHour: 3 },
 ];
@@ -127,6 +136,7 @@ const activities = [
   { id: 'thermo', label: 'termokamera', do: 'kontrolu místa zásahu termokamerou' },
   { id: 'breathing', label: 'dýchací technika', text: 'Členové jednotky zasahovali v dýchací technice.' },
 ];
+const full = v => v.type ? `${v.name} ${v.type}` : v.name;
 const cz = n => String(Math.round(n * 10) / 10).replace('.', ',');
 const litres = n => Math.round(n); // ponytail: celé litry jako ve vzorech; pro desetiny Math.round(n * 10) / 10
 
@@ -138,8 +148,8 @@ function buildReport(f) {
     const mth = num(v.id + '.h') + num(v.id + '.min') / 60;
     const pmth = num(v.id + '.ph') + num(v.id + '.pmin') / 60;
     const use = (label, amount, l) => { fuel.push(`${v.name}${label} - ${amount} - ${cz(l)} l ${v.fuel}`); total[v.fuel] += l; };
-    if (v.perKm && (km || crew)) went.push(v.name + (crew ? ` v počtu ${crew}` : ''));
-    if (km) { driven.push(`${v.name} - ${cz(km)} km`); total.km += km; use('', `${cz(km)} km`, litres(km * v.perKm)); }
+    if (v.per100km && (km || crew)) went.push(full(v) + (crew ? ` v počtu ${crew}` : ''));
+    if (km) { driven.push(`${v.name} - ${cz(km)} km`); total.km += km; use('', `${cz(km)} km`, litres(km * v.per100km / 100)); }
     if (mth + pmth) driven.push(`${v.name} - ${cz(mth + pmth)} Mth`);
     if (mth) use(v.perHourPump ? ' Bez čerpadla' : '', `${cz(mth)} Mth`, litres(mth * v.perHour));
     if (pmth) use(' S čerpadlem', `${cz(pmth)} Mth`, litres(pmth * v.perHourPump));
@@ -180,9 +190,11 @@ const form = document.getElementById('form'), out = document.getElementById('out
 const numInput = (name, label) => `<label>${label}<input name="${name}" type="number" min="0" inputmode="decimal"></label>`;
 document.getElementById('vehicles').innerHTML = vehicles.map(v => `
   <div class="card">
-    <h2>${v.name}</h2>
-    <div class="norm">${[v.perKm && `${String(v.perKm).replace('.', ',')} l/km`, v.perHour && `${v.perHour} l/Mth`, v.perHourPump && `${v.perHourPump} l/Mth s čerpadlem`].filter(Boolean).join(' · ')}</div>
-    ${v.perKm ? `<label>Posádka<input name="${v.id}.crew" placeholder="1+3"></label>` + numInput(v.id + '.km', 'Ujeto km') : ''}
+    <h2>${full(v)}</h2>
+    <div class="norm">${[v.per100km && `${v.per100km} l/100 km`, v.perHour && `${v.perHour} l/Mth`, v.perHourPump && `${v.perHourPump} l/Mth s čerpadlem`].filter(Boolean).join(' · ')}</div>
+    ${v.seats ? `<label>Posádka</label><div class="crew">${['', ...Array.from({ length: v.seats }, (_, i) => '1+' + i)].map(c =>
+      `<label><input type="radio" name="${v.id}.crew" value="${c}"><span>${c || '–'}</span></label>`).join('')}</div>` : ''}
+    ${v.per100km ? numInput(v.id + '.km', 'Ujeto km') : ''}
     ${v.perHour ? `<div class="row">${numInput(v.id + '.h', v.perHourPump ? 'Motohodiny bez čerpadla' : 'Motohodiny')}${numInput(v.id + '.min', 'Minuty')}</div>` : ''}
     ${v.perHourPump ? `<div class="row">${numInput(v.id + '.ph', 'Motohodiny s čerpadlem')}${numInput(v.id + '.pmin', 'Minuty')}</div>` : ''}
   </div>`).join('');

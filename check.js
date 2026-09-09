@@ -10,7 +10,7 @@ assert.strictEqual(buildReport({
   'cas32.crew': '1+2', 'cas32.km': '20', 'cas32.min': '30', 'cas32.pmin': '30', 'oa.crew': '1+1', 'oa.km': '20',
 }), `ZÁSAH MIMO KATASTR ZŘIZOVATELE
 
-Jednotka vyjela s CAS 32 v počtu 1+2 a OA Fabia v počtu 1+1 na požár do areálu firmy Kovošrot Groupe s.r.o. Po příjezdu na místo zásahu bylo průzkumem zjištěno, že na místě již zasahují ostatní jednotky. Na pokyn VZ naše jednotka doplňovala vodu do CAS 30. Po vyprázdnění CAS se jednotka vrátila zpět na základnu.
+Jednotka vyjela s CAS 32 Tatra 815 v počtu 1+2 a OA Fabia v počtu 1+1 na požár do areálu firmy Kovošrot Groupe s.r.o. Po příjezdu na místo zásahu bylo průzkumem zjištěno, že na místě již zasahují ostatní jednotky. Na pokyn VZ naše jednotka doplňovala vodu do CAS 30. Po vyprázdnění CAS se jednotka vrátila zpět na základnu.
 
 Ujeto:
 CAS 32 - 20 km
@@ -34,4 +34,5 @@ assert.ok(buildReport({ area: 'X', 'cas25.ph': '1' }).includes('Ujeto:\nCAS 25 -
 assert.strictEqual(buildReport({ area: 'X', 'act.thermo': '1', 'act.breathing': '1', 'act.water': '1', 'act.shuttle': '1', activity: 'Vlastní text', note: 'VZ informován' }),
   'X\n\nJednotka prováděla doplňování vody do CAS ostatních jednotek, kyvadlovou dálkovou dopravu vody z hydrantu a kontrolu místa zásahu termokamerou. Členové jednotky zasahovali v dýchací technice. Vlastní text.\n\nVZ informován.');
 assert.strictEqual(buildReport({ area: 'X', 'act.thermo': '1' }), 'X\n\nJednotka prováděla kontrolu místa zásahu termokamerou.');
+assert.ok(buildReport({ area: 'X', 'da.km': '100', 'da.crew': '1+3' }).includes('Jednotka vyjela s DA Ford v počtu 1+3.\n\nUjeto:\nDA Ford - 100 km\n\nSpotřeba PHM:\nDA Ford - 100 km - 10 l nafta'));
 console.log('OK');
